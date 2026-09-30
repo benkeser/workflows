@@ -1,0 +1,693 @@
+---
+title: "Building Better Coding Workflows<br>(in an AI world)"
+author: "David Benkeser, PhD MPH<br> <span style = 'font-size: 50%;'> Emory University<br> Department of Biostatistics and Bioinformatics </span>"
+date: 'September 30, 2026'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      titleSlideClass: ["left", "middle", "inverse"]
+      highlightStyle: tomorrow-night-blue
+      highlightLanguage: rmarkdown
+      highlightLines: false
+---
+
+background-color: #84754e
+class: title-slide, center, inverse, middle
+
+.small[*Saying [researchers] should spend more time thinking about the way they write code would be like telling a novelist that she should spend more time thinking about how best to use Microsoft Word. Sure, there are people who take whole courses in how to change fonts or do mail merge, but anyone moderately clever just opens the thing up and figures out how it works along the way.* </br> *This manual began with a growing sense that our own version of this self-taught seat-of-the-pants approach to computing was hitting its limits.*]
+</br> </br> .small[Gentzkow and Shapiro </br> [__Code and Data for the Social Sciences: A Practitioner’s Guide__](https://web.stanford.edu/~gentzkow/research/CodeAndData.pdf)]
+
+???
+
+Why spend a lecture on workflow styles and coding style if everyone here already knows how to code and run analyses.
+* Good code is more likely to generate correct results.
+* Good code is easier to use.
+* Good code is easier to revisit six months from now.
+* Good workflows enable faster, more robust science. 
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+
+extra_css <- list(
+  ".small" =  list(`font-size` = "80%"),
+  ".large" =  list(`font-size` = "150%"),
+  "ul li" = list(`margin-bottom` = "10px"),
+  ".red" = list(color = "#da291c",
+                `font-weight` = "600"),
+  ".green" = list(color = "#348338",
+                `font-weight` = "600"),
+  ".code-box" = list(display = "inline-block", 
+    width = "95%",
+    `line-height` = "1em",
+    padding = "5px",
+    `font-size` = "80%",
+    `background-color` = "#f6f6f6",
+    `align-items` = "left",
+    `font-family` = "Courier Prime",
+    border = "1px solid black"),
+  "ul" = list(`margin-bottom` = "0.5em",
+              `margin-top` = "0.5em"),
+  "p" = list(`margin-bottom` = "0.25em"),
+  "a" = list(color = "#007dba"),
+  "a:hover" = list("text-decoration" = "underline"),
+  ".monobox" = list(
+    display = "inline-block", 
+    width = "90%",
+    height = "400px",
+    padding = "5px",
+    border = "1px solid #012169",
+    `background-color` = "#d9d9d6",
+    `font-family` = "Courier Prime",
+    `align-items` = "left",
+    `vertical-align` = "middle"
+  )
+)
+
+style_mono_accent(
+  base_color = "#012169",
+  header_font_google = google_font("DM Sans"),
+  text_font_google   = google_font("DM Sans", "400", "400i"),
+  code_font_google   = google_font("Courier Prime"),
+  extra_css = extra_css
+)
+```
+
+<style type="text/css">
+.remark-slide-content {
+    font-size: 22px
+}
+</style>
+
+## Workflows
+
+- Software is **the tool** of modern public health research
+- No one would tell a biologist not to think about how they use tools to perform science
+- We need to carefully consider how to best use our tools
+- ...including generative AI
+
+---
+
+## Principles for scientific coding
+
+In this order: 
+
+1. Code that works.
+2. Code that is reproducible.
+3. Code that is readable.
+4. Code that is generalizable.
+5. Code that is efficient.
+
+A __minimal standard__ for scientific computing is 1-3. 
+
+???
+
+"Works" means code that gives the right answer. 
+
+Reproducible means that someone else could run the code and get the same answer. 
+
+Code that is readable means code that can be easily read and understood BY HUMANS.
+
+Generalizability and efficiency is far down the line of desirables. 
+
+---
+
+## What AI is best at
+
+In this order: 
+
+1. Code that is generalizable.
+2. Code that is efficient.
+3. Code that is reproducible.
+4. Code that is readable.
+5. Code that works.
+
+
+???
+
+Bulk of training data for generative AI comes from web applications, toolkits. Designed to face users and function as part of a wider software architecture/ecosystem. Thus, AI is very good at writing code that is generalizable and efficient. 
+
+Generally, AI is also good at writing code that is reproducible, but we often need to be somewhat explicit with it about what that means.
+
+I would argue in an AI age, verifying that code works requires gearing workflows towards making code readable. We will discuss today.
+
+---
+
+## Focus of the talk today
+
+- What does reproducible code mean?
+- What are some principles of writing "good code"?
+- What AI tools are available to write "good code"?
+- When SHOULD we use AI tools to write code? 
+- How can we use these tools to write "good code"?
+
+???
+
+My assumption is that in the near future, everyone will be using generative AI in one way or another to write code.
+
+That does not mean you should never write code by hand again -- especially if you are still in training.
+
+Goal of the talk today is to understand principles for building up workflows that generate good code that is trustworthy and easy to run.
+
+---
+
+## Motivation for reproducible code
+
+An email you'll receive...
+
+.center[
+  .monobox[
+      David, 
+      <br>
+      <br> After review, we found that some data may have been 
+      mislabeled. Could you re-run the analyses and update numbers in 
+      Tables 1-3 and re-create Figure 2?
+      <br>
+      <br> We would like to submit this paper by the end of the week.
+      <br>
+      <br> Best wishes, 
+      <br> Every collaborator ever
+  ]
+]
+
+???
+
+Very commonly in collaborations, the data change. It could be due to errors, more data being added, etc... The goal of this class is to make it so you do not fill with dread when you receive such an e-mail.
+
+It is cost inefficient to have generative AI run code for you and currently there are major privacy concerns regarding data sharing. 
+
+So you better set up your code bases to be able to run analyses yourself.
+
+A good reproducible workflow, means you simply download the new data, type one command and voila! No by-hand entering numbers into tables. No copy-pasting from R/SAS/STATA to Word. Just one click.
+
+---
+
+## Motivation for reproducible code
+
+Another email you'll receive...
+
+.center[
+  .monobox[
+    David, 
+      <br>
+      <br> The data will be finalized tomorrow and we need to have 
+      new Tables to the DSMB report by the end of the day. Sorry about that.
+      <br>
+      <br> Best wishes, 
+      <br> Every collaborator ever
+  ]
+]
+
+
+???
+
+
+To prepare for situations like this, project organization is key. We will discuss strategies for preparing fast-turnaround projects. But just because we are turning projects around quickly, does not mean we are not working carefully. By having a set, reproducible workflow in place before data acquisition, we can have the best of both worlds. Careful analysis planning and execution AND fast delivery.
+
+---
+
+## Motivation for reproducible code
+
+Another email you'll receive...
+
+.center[
+  .monobox[
+      David, 
+      <br>
+      <br> IT just updated R to the latest version on my computer 
+      and your analysis code no longer runs. I get lots of strange 
+      error messages about compilers and package versions. What gives?
+      <br>
+      <br> Best wishes, 
+      <br> Every collaborator ever
+  ]
+]
+
+???
+
+Managing software versions, packages, dependencies, libraries, etc... requires an understanding of what tools are being used.
+
+AI can help some here, but only if you deeply understand what is going on under the hood. Otherwise, we risk letting AI ruin an otherwise mostly functioning analysis/computer/workflow.
+
+---
+
+## Working definition of reproducibility
+
+There are many related terms: reproducibility, replicability, generalizability, etc...
+
+**Reproducibility** = could a different analyst sit down with your code, execute it and get exactly the same results?
+
+Reproducibility is a *very minimal* standard -- especially in the age of generative AI. Just because something is *reproducible* does not necessarily imply that it is *correct*.
+
+???
+
+
+In previous versions of this talk, I conjectured that reproducibility is likely correlated with correctness -- if you are careful enough to make everything reproducible, you're probably more likely to be careful in designing the analysis in the first place. I am not sure this is the case anymore given generative AI.
+
+---
+class: title-slide, center, inverse, middle
+background-color: #84754e
+
+*You mostly collaborate with yourself, and me-from-two-months-ago never responds to email.*
+<div> - Karen Cranston
+
+---
+class: title-slide, center, inverse, middle
+background-color: #84754e
+
+*You mostly collaborate with AI, and AI-from-two-months-ago might not be able to respond to email.*
+<div> - David Benkeser
+
+???
+
+AI technology is changing fast and pricing models are not static. We need to leave projects in a state that is "maintainable". That is, we are able to pick the project back up later and continue to make progress.
+
+---
+
+## Why should I care about workflows and reproducibility?
+
+* Employing careful and deliberate workflows means you are more likely to produce __correct results__.
+* In the long run, you will __save (a lot of) time__.
+* Higher __impact__ of your science.
+* __Avoid embarrassment__ on a public stage.
+
+???
+
+Forcing yourself to code things by hand is time consuming. The allure of using generative AI is huge. Don't give in (all the time).
+
+Learning fundamentals of coding and the tools of reproducible science is time consuming, but is ultimately time-saving and necessary. Any idiot can prompt AI -- that's not marketable. Begin a well trained analyst means being able to understand the output.
+
+One of my previous great fears as an academic is being accused of intentionally doing bad science. Leaving a paper trail that any one else can follow is a bit intimidating -- we all make mistakes. Reproducible work indicates that any mistakes made were likely honest.
+
+One of my new great fears as an academic is being accused of doing lazy science. There will be high profile cases of big important labs publishing junk science because they do not understand AI output. I can guarantee it. Develop appropriate workflows early and commit to staying engaged in the scientific process.
+
+---
+
+### Tools for modern reproducible research
+
+Tools __every modern quantitative scientist__ should know:
+
+* Hotkeys
+* R or (and, really) python
+* Tools for reporting: quarto, R Markdown, jupyter notebooks
+* Using the command line
+* Basics of a scripting language: `bash`, `zsh`, etc...
+* A package management system: `packrat`, `renv` (`pip`, `venv`)
+* git and GitHub
+
+???
+
+These are roughly ordered in terms of importance/amount of knowledge necessary.
+
+I have left AI off of this list, because in some ways I think this is the minimal skillset that is needed to responsibly interface with AI. Learning ins and outs of AI tools is useful too, but this all comes first.
+
+A lot of these are covered in classes around Rollins, e.g., DATA 550. 
+
+---
+
+### Tools for modern reproducible research
+
+__Other useful skills to know__
+
+* Relational databases (e.g., SQL)
+* Systems for automated building (e.g., GNU Make)
+* Web-based languages: html, Java Script
+* Containerization services (e.g., Docker)
+
+---
+
+## What does good code look like?
+
+__Principle 1__: Don't repeat yourself
+
+Don't repeat yourself (DRY) is a fundamental concept in programming. 
+* *Ruthlessly eliminate duplication*, [Wilson et al](https://swcarpentry.github.io/good-enough-practices-in-scientific-computing/)
+
+For example, variables `score1=1`, `score2=2`, `score3=3` &#8594; `score=list(1,2,3)`. 
+
+If you write the same code more than once, it should be a function. 
+* Break large tasks into smaller calls to functions. 
+* Give functions (everything, really) meaningful names.
+  * self-documenting code
+  * use tab-completion
+
+???
+
+It is highly inefficient and dangerous to copy and paste multiple chunks of code.
+* What if you need to change 1 thing? Needs to be changed in multiple places. Risk getting a wrong answer because we forgot to change one small thing.
+
+Meaningful names make reading code much easier. It's OK to make names long and informative. Most (good) text editors will have tab completion so that it won't slow you down typing (once you're used to using it). 
+
+---
+
+## What does good code look like?
+
+__Principle 2__: Use appropriately named functions.
+
+If you don't know how functions work in `R`, .red[learn about them now]. 
+* [Software carpentry: Creating R Functions](https://swcarpentry.github.io/r-novice-inflammation/02-func-R/)
+* [R for Data Science: Functions](https://r4ds.had.co.nz/functions.html)
+* [DataCamp: A Tutorial on Using Functions in R!](https://www.datacamp.com/community/tutorials/functions-in-r-a-tutorial)
+
+---
+
+## What does good code look like?
+
+__Principle 3__: No magic numbers.
+
+There are __many decision points__ in an analysis. Give them a name!
+* How many __bootstrap samples__?
+  * `nboot = 1e3`
+
+Even better, include them as an __argument to a function__ (with default values and documentation, as needed)!
+* `get_bootstrap_ci <- function(..., nboot = 1e3)`
+
+Even better, no magic vectors!
+* `adjustment_variables <- c("age", "sex", "bmi", ...)`
+
+---
+
+## What does good code look like?
+
+__Principle 4__: Make your analysis code behave like an API.
+
+API = application programming interface
+* A waiter who takes your order, brings it to the kitchen, returns your meal
+
+Menu = inputs to your code (e.g., named variables, parameters in an R Markdown report, etc...)
+
+Kitchen = the actual R code that takes those inputs and performs an analysis
+
+Meal = your reported results
+
+---
+
+## What does good code look like?
+
+__Principle 4__: Good code is generalizable... but not to every scenario.
+
+Write code __a bit more general__ than your data or specific task.
+* Don't assume particular dimensions. Don't forget about missing values (even if *your* data have none).
+
+But .red[don't try to handle every case.] 
+* Try to anticipate what you might be asked for, but don't prepare for every possibility.
+* If you think of __extreme cases__ where code will break, __document them__.
+
+Use __function arguments__ to handle different cases. 
+* Don't assume particular file names.
+* Don't assume particular tuning parameters. 
+* Don't assume particular regression formulas.
+
+???
+
+Do you hear your collaborators making an arbitrary decision in the analysis plan? Prepare for that decision to change. 
+
+An example: in [a recent paper](https://www.sciencedirect.com/science/article/pii/S1047279720301769), we looked at county-level characteristics by proportion of county that was African-American. The analysis started looking at </> 13% (the national average). This was an arbitrary choice made at the outset of the analysis. So when I wrote the code to produce summary statistics stratifying on this characteristic, I wrote it so one could provide any arbitrary number/s and obtain characteristics. Eventually, they wanted to see it broken down by 13/25% and by 13/25/50%. They ended up not liking the look of the tables, so we went back to </>13 (trivial). For me, all I needed to do was change __a single function input__. This was a (rare) success story for me in generalizing code. The code to make this table is [here](https://github.com/benkeser/covid-and-race/blob/master/Code/01_tablefunctions.R).
+
+---
+
+## What does good code look like?
+
+__Principle 5__: Good code is well formatted.
+
+* __Indent__!
+  * 2 or 4 spaces (join the debate)
+  * Tabs can get nasty across systems.
+
+* Use __white space__!
+  * After commas, operators
+
+* Use `{}` and `()` to __avoid ambiguity__.
+
+* Keep __lines short__!
+  * Rule of thumb is 72 or 80 characters. 
+  * Most text editors have settings to help with this.
+
+???
+
+AI is pretty good at this, so I won't linger on this point for too long.
+
+## What does good code look like?
+
+__Principle 6__: Good code has informative names
+
+* Names should be: 
+  1. most importantly, descriptive
+  2. as concise as possible while still being descriptive
+* Avoid `tmp1`, `tmp2`, ...
+  * ...as `tmp`ting as it may be.
+* Functions as verbs, objects as nouns
+
+???
+
+Please don't look too closely at my `R` packages. You may learn what a hypocrite I am.
+
+---
+
+## What does good code look like?
+
+__Principle 6__: Good code has informative names
+
+Have __consistency__ in your naming systems:
+* E.g., `markers` vs. `mnames`; `nft` vs. `n_ft`
+
+Commit to a case:
+* `camelCase` vs. `pothole_case`
+
+Don't confuse yourself:
+* `total` vs. `totals`
+* `result` vs. `rslt`
+* `X` vs. `x` 
+* `z` vs. `zz`
+
+---
+
+## What does good code look like?
+
+__Principle 7__: Good code is self-documenting
+
+Many of these principles are aimed towards .green[making code self-documenting]. 
+
+Comments should be used mostly for __why__, not __what__.
+* The __what__ should be inherent from the code itself.
+
+This is really __hard to do__.
+* Sometimes its harder than its worth, but it is worth trying!
+
+???
+
+In my opinion, both new coders (and generative AI) massively over-comments code.
+
+---
+
+## Self-documenting code
+
+Here's an example of .red[bad code]:
+
+```{r}
+tmp1 <- 9.81
+tmp2 <- 5
+tmp3 <- 0.5 * tmp1 * tmp2^2
+```
+
+Here's an example of .green[documented] .red[bad code]:
+
+```{r}
+# gravitational constant
+tmp1 <- 9.81
+# time object is falling
+tmp2 <- 5
+# displacement of the object
+tmp3 <- 0.5 * tmp1 * tmp2^2
+```
+
+???
+
+The first chunk is bad because the variables have non-informative names and nothing is documented. We have to think really hard to understand what this code is doing.
+
+The second chunk is better; at least it is documented! But it's redundant and not self-documenting. 
+
+---
+
+## Self-documenting code
+
+Here's .green[self-documenting code]:
+
+```{r}
+gravitational_force <- 9.81
+time_in_seconds <- 5
+displacement <- 1/2 * gravitational_force * time_in_seconds^2
+```
+
+Now let's add a .green[comment] explaining the __why__:
+
+```{r}
+# compute displacement of falling object with Newton's equation
+gravitational_force <- 9.81
+time_in_seconds <- 5
+displacement <- 1/2 * gravitational_force * time_in_seconds^2
+```
+
+---
+
+## Self-documenting code
+
+Even better, .green[make it a function]!
+
+```{r}
+# for falling objects based on Newton's equation
+compute_displacement <- function(time_in_seconds){
+  gravitational_force <- 9.81
+  time_in_seconds <- 5
+  displacement <- 1/2 * gravitational_force * time_in_seconds^2
+  return(displacement)
+}
+```
+
+---
+
+background-color: #487f84
+class: title-slide, inverse, middle
+
+.large[*Rules for writing comments:*
+1. *Only comment code that's hard to understand.*
+2. *Try not to write code that's hard to understand.*
+]
+???
+
+There is a natural tendency to overwrite comments in code. I do it all the time. Why does it matter?
+* Comments need to be "maintained". If the code changes, the comments may need to as well.
+* Don't end up with conflicting comments and code.
+* Comments provide another opportunity for you to be confused or made uncertain about the veracity of AI-generated code. 
+
+---
+
+### What AI tools are available to write "good code"?
+
+__Chat-based coding__
+
+1. Human coding/AI in the loop = you are writing the code and you are using AI chat-bots to help solve specific problems
+
+2. AI coding/human in the loop = you are planning code with AI, AI writes the code, you integrate it.
+
+__Agentic coding__
+
+AI tools can inspect files, edit files directly, run tests, build software packages, push files to GitHub etc...
+* e.g., Codex, Claude Code, ...
+
+???
+
+There are different use cases for each of these approaches and many axes along which we may start to prefer one approach over another. I do not have all of the answers here; the field is evolving fast.
+
+---
+
+## When SHOULD we use AI tools to write code? 
+
+How do we decide which approach is best for a given problem?
+
+* Training vs. pure productivity
+* How easy is it to test/validate AI-generated code?
+* Stakes of decisions made based on the output
+* How much (and how often) is specific scientific knowledge require to appropriately advance the work?
+* Does the codebase need to be maintained/extended?
+* How novel is the problem?
+
+???
+
+I think it is __inevitable__ that generative AI will be writing the bulk of the code generated by humanity in the next 20 years. So our job is to figure out how to most appropriately use it across different use cases.
+
+These are just a few axes along which we may lean towards one approach or another.
+
+Training vs. productivity
+* As students, you should absolutely, unquestionably, 100\%, no-doubt-in-my-mind write and execute code by hand.
+* The fastest way to learn French is not to pick up Les Mis and try to read it. You have to speak it too!
+* Human coding/AI in the loop is the way to go. Use AI to facilitate "yak shaving".
+* PIs SHOULD appropriately temper productivity expectations.
+
+How easy is it to test/validate AI-generated code?
+* If your task is to rearrange a figure and you know what the figure is meant to look like, then may be safe to go full agentic.
+* The output can immediately be scrutinized for veracity!
+* If your task is to implement a complex analytic method and you have no idea what the write answer is, you need a human more in the loop.
+
+---
+
+### How can we use AI tools to write "good code"?
+
+__Principle 1__: For high stakes projects, you either need to fully understand the code or fully understand a complete suite of tests that validate the code.
+
+You should strive to be able to read and perfectly understand every single line of AI-generated code.
+
+Barring your ability to do this, have AI write tests and demonstrations of the code for you to convince yourself it is correct.
+
+Defining an exhaustive set of tests requires strong critical thinking. If you do not understand the code, you cannot turn this thinking over to the machine.
+
+---
+
+### How can we use AI tools to write "good code"?
+
+__Principle 2__: Provide consistent context
+
+Add a small markdown file (e.g., `CLAUDE.md`) to your repository that explains your project and preferred conventions.
+* "This project aims to do this..."
+* "Prefer for loops over complicated calls to `lapply`, `tapply`, etc..."
+* "Try to make code self-documenting..."
+
+Load this markdown document into every conversation about a given project.
+
+Update the document as the project evolves and you learn common pitfalls that AI is falling into.
+
+---
+
+### How can we use AI tools to write "good code"?
+
+__Principle 3:__ Think before you or AI code
+
+Before you or AI write code, agree on a high level, human-readable development plan for accomplishing your task.
+
+Iterate, ask questions, provide pseudo-code, ask AI to provide pseudo-code.
+
+Once you have an agreed on development plan, add it to a `dev` folder in your project.
+
+---
+
+### How can we use AI tools to write "good code"?
+
+__Principle 4:__ Adopt workflows that force you to look at your code at well-defined checkpoints. 
+
+Chat-based workflows do this by default to some extent, but you can still end up copying 2000 lines of code without reading it.
+
+Break the development plan into intermediate steps.
+* Using git/Github to outline and validate a series of small planned commits/PRs is useful
+
+Learn debugging tools that allow you to step through AI-generated code line-by-line in order to scrutinize output after each step.
+
+???
+
+My agreed upon development plan with AI:
+- I want to implement feature A
+- First, we agree on a contract using pseudo-code and human-language  discussion of the feature
+- Next, we map out a series of commits/PRs that will allow us to implement the feature
+- Next, we go commit-by-commit and I validate code after each commit and approve before we move on.
+- Before writing each commit, AI asks me questions that need answers prior to implementation.
+
+---
+
+## Recap
+
+If you want to be a "good coder", you need to:
+* learn what good code looks like
+* write good code by hand 
+
+Strive for reproducibility in your projects, irrespective of the coding approach adopted.
+
+Be cognizant of your workflows and look for ways to improve them.
+
+???
+
+From hotkey usage to remembering what AI did well/poorly in a given project, be adaptive to your experiences. Self-awareness is how you continue to get better at this stuff!
+
+
+
+
+
+
